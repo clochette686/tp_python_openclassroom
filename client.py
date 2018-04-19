@@ -7,8 +7,8 @@ import time
 hote = "localhost"
 port = 12800
 
-verrou_msg_a_envoyer = RLock()
-verrou_msg_a_lire = RLock()
+
+
 verrou_cmd_utilisateur = RLock()
 
 connection_active = True
@@ -19,16 +19,17 @@ class Partie_envoie_messages_serveur(Thread):
         Thread.__init__(self)
         self.serveur = connexion_serveur
         self.message_a_envoyer = []
+        self.verrou_msg_a_envoyer = RLock()
 
     def set_message(self, message):
-        with verrou_msg_a_envoyer:
+        with self.verrou_msg_a_envoyer:
             print("message a envoyer" + message + "\n")
             self.message_a_envoyer.append(message.encode())
     
     def run(self):
         while connection_active:
             print("envoie de messages au serveur\n")
-            with verrou_msg_a_envoyer:
+            with self.verrou_msg_a_envoyer:
                 while len(self.message_a_envoyer) != 0:
                     message = self.message_a_envoyer.pop(0)
                     self.serveur.send(message)
@@ -41,9 +42,10 @@ class Partie_reception_messages_serveur(Thread):
         Thread.__init__(self)
         self.serveur = connexion_serveur
         self.messages_recus = []
+        self.verrou_msg_a_lire = RLock()
 
     def get_messages(self):
-        with verrou_msg_a_lire:
+        with self.verrou_msg_a_lire:
             messages = []
             while len(self.messages_recus) > 0:
                 message = self.messages_recus.pop(0)
@@ -53,7 +55,7 @@ class Partie_reception_messages_serveur(Thread):
     def run(self):
         while connection_active:
             print("receptionner les messages")
-            with verrou_msg_a_lire:
+            with self.verrou_msg_a_lire:
                 message = self.serveur.recv(1024)
                 if len(message) > 0:
                     self.messages_recus.append(message)
