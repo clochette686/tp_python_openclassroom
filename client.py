@@ -95,7 +95,7 @@ def connexion_au_serveur():
     return connexion_avec_serveur
 
 
-def traitement_messages_serveur(thread_recep_serveur):
+def traitement_messages_serveur(thread_recep_serveur, partie_commencee):
     #on recupere et affiche tous les messages du serveur
     messages = thread_recep_serveur.get_messages()
     if len(messages) > 0:
@@ -106,7 +106,8 @@ def traitement_messages_serveur(thread_recep_serveur):
             print(message + "\n")
         #apres chaque nouveau message du serveur, on rappelle au joueur la commande pour lancer la partie
         if not partie_commencee:
-            print("Appuyez sur C pour commencer la partie \n")    
+            print("Appuyez sur C pour commencer la partie \n")
+    return partie_commencee       
 
 def traitement_input_client(thread_envoi_serveur, partie_commencee):
     #on regarde parmi les saisies clavier du joueur si il n'aurait pas demandé à démarrer la partie
@@ -124,8 +125,9 @@ def attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur):
 
     #phase d'attente du debut de la partie
     while not partie_commencee:
-        traitement_messages_serveur(thread_recep_serveur)
-        partie_commencee = traitement_input_client(thread_envoi_serveur, partie_commencee)
+        partie_commencee = traitement_messages_serveur(thread_recep_serveur, partie_commencee)
+        if not partie_commencee:
+            partie_commencee = traitement_input_client(thread_envoi_serveur, partie_commencee)
    
 
 
