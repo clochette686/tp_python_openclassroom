@@ -133,7 +133,8 @@ def attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrint
         while not partie_demarree:
 
                 clients_connectes = traitement_demandes_connexions(connexion_principale, labyrinthe, clients_connectes)
-                partie_demarree = traitement_messages_clients(clients_connectes)
+                partie_demarree = traitement_messages_clients(clients_connectes)        
+        return clients_connectes                
 
 
 
@@ -157,7 +158,12 @@ def gestion_partie(labyrinthe,clients_connectes, connexion_principale):
                         #verifier si le joueur a gagné
                         #si oui, partie_demarree = False, serveur_lance = False
                         #et on envoie un message à tous les joeurs "Joueur X a gagné"
+                        
                 partie_demarree = False
+        for client in clients_connectes:
+                msg = "Joueur X a gagné"
+                msg = msg.encode()
+                client.send(msg)
         
 
 def fermeture_connexion(clients_connectes, connexion_principale):
@@ -171,8 +177,11 @@ def fermeture_connexion(clients_connectes, connexion_principale):
 def serveur_main():
         connexion_principale = gestion_connexion()
         labyrinthe = choix_labyrinthe()
+        print("attente connexion des clients")
         clients_connectes = attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrinthe)
+        print("la partie commence")
         gestion_partie(labyrinthe,clients_connectes, connexion_principale)
+        print("la partie est terminee")
         fermeture_connexion(clients_connectes, connexion_principale)
 
 serveur_main()

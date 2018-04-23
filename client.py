@@ -17,17 +17,19 @@ class Partie_envoie_messages_serveur(Thread):
 
     def set_message(self, message):
         with self.verrou_msg_a_envoyer:
-            print("message a envoyer" + message + "\n")
+            print("message a envoyer " + message + "\n")
             self.message_a_envoyer.append(message.encode())
+            print("longueur message a envoyer = " + str(len(self.message_a_envoyer)))
     
     def run(self):
         while self.connection_active:
-            print("envoie de messages au serveur\n")
             with self.verrou_msg_a_envoyer:
-                while len(self.message_a_envoyer) != 0:
-                    message = self.message_a_envoyer.pop(0)
-                    self.serveur.send(message)
-            time.sleep(100)        
+                if len(self.message_a_envoyer) > 0:
+                    for message in self.message_a_envoyer:
+                        print("envoie du message " + message.decode())
+                        self.serveur.send(message)
+                    self.message_a_envoyer = []    
+            time.sleep(5)        
                     
 
 class Partie_reception_messages_serveur(Thread):
@@ -54,7 +56,7 @@ class Partie_reception_messages_serveur(Thread):
                 message = self.serveur.recv(1024)
                 if len(message) > 0:
                     self.messages_recus.append(message)
-            time.sleep(100)        
+            time.sleep(5)        
 
 class Partie_lecture_entree_clavier(Thread):
 
@@ -114,10 +116,12 @@ def traitement_input_client(thread_envoi_serveur, partie_commencee):
     #commandes = thread_input_clavier.get_commandes()
     commande = input()
 
+    print("la commande saisie est : " + commande)
     #for commande in commandes:
     if commande.rstrip().upper() == 'C':
         thread_envoi_serveur.set_message(commande)
         partie_commencee = True
+        print("commande de demarrage saisie ")
     return partie_commencee    
 
 def attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur):
@@ -190,10 +194,13 @@ def client_main():
     thread_envoi_serveur.start()
     thread_recep_serveur.start()
 
+    print("attente demarrage partie ")
     attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur)
 
+    print("la partie est demarree ")
     deroulement_tours_de_jeu(thread_recep_serveur, thread_envoi_serveur)
 
+    print("fin de partie")
     fermeture_connexion_serveur(connexion_avec_serveur)
 
 client_main()    
