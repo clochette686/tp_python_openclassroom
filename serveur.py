@@ -7,7 +7,7 @@ from EntreeSortie.SortieConsole import AffichageConsole
 import os
 import glob
 
-def gestion_connexion():
+def ouverture_connexion():
         hote = ''
         port = 12800
 
@@ -175,7 +175,7 @@ def fermeture_connexion(clients_connectes, connexion_principale):
 
 
 def serveur_main():
-        connexion_principale = gestion_connexion()
+        connexion_principale = ouverture_connexion()
         labyrinthe = choix_labyrinthe()
         print("attente connexion des clients")
         clients_connectes = attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrinthe)

@@ -29,7 +29,7 @@ class Partie_envoie_messages_serveur(Thread):
                         print("envoie du message " + message.decode())
                         self.serveur.send(message)
                     self.message_a_envoyer = []    
-            time.sleep(5)        
+            time.sleep(4)        
                     
 
 class Partie_reception_messages_serveur(Thread):
@@ -56,7 +56,7 @@ class Partie_reception_messages_serveur(Thread):
                 message = self.serveur.recv(1024)
                 if len(message) > 0:
                     self.messages_recus.append(message)
-            time.sleep(5)        
+            time.sleep(4)        
 
 class Partie_lecture_entree_clavier(Thread):
 
@@ -85,7 +85,7 @@ class Partie_lecture_entree_clavier(Thread):
             with self.verrou_cmd_utilisateur:
                 commande = input()
                 self.saisie_utilisateur.append(commande)
-            time.sleep(100)    
+            time.sleep(2)    
 
 
 def connexion_au_serveur():
