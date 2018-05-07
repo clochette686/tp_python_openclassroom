@@ -2,9 +2,21 @@ import socket
 from threading import Thread
 from threading import RLock
 import re
+
+import sys
+import msvcrt
+from EntreeSortie.SimuEntreeClavier import SendKeys
 import time
 
+class Simu_saisie_clavier(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.connection_active = True
 
+    def run(self):
+        while self.connection_active:
+            SendKeys("{ENTER}")
+            SendKeys("{PAUSE 3}")
 
 class Partie_envoie_messages_serveur(Thread):
 
@@ -84,7 +96,8 @@ class Partie_lecture_entree_clavier(Thread):
         while self.connection_active:
             with self.verrou_cmd_utilisateur:
                 commande = input()
-                self.saisie_utilisateur.append(commande)
+                if commande != "": 
+                    self.saisie_utilisateur.append(commande)
             time.sleep(2)    
 
 
@@ -134,7 +147,7 @@ def attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur, thread_
    
 
 
-def attendre_son_tour(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, partie_terminee):
+def attendre_son_tour(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, thread_simu_input, partie_terminee):
     mon_tour = False
     #en attendant son tour de jeu, on affiche toutes les infos recues par le serveur
     while not mon_tour and not partie_terminee:
@@ -149,13 +162,15 @@ def attendre_son_tour(thread_recep_serveur, thread_envoi_serveur, thread_input_c
                 thread_input_clavier.connection_active = False #condition pour arreter les thread de communication
                 thread_envoi_serveur.connection_active = False #condition pour arreter les thread de communication
                 thread_recep_serveur.connection_active = False #condition pour arreter les thread de communication
+                thread_simu_input.connection_active = False #condition pour arreter les thread de communication
             print(message + "\n")
     return (mon_tour, partie_terminee)        
 
 def jouer_son_tour(thread_envoi_serveur, thread_input_clavier):
     commande_valide = ""
+    print("Veuillez entrer votre prochain mouvement")
     while commande_valide == "":
-        print("Veuillez entrer votre prochain mouvement")
+        
         commande = thread_input_clavier.get_first_commande()
         #commande = input()
         if commande is not None and commande.rstrip().upper() in ["N","S","E","W"]:
@@ -164,14 +179,14 @@ def jouer_son_tour(thread_envoi_serveur, thread_input_clavier):
     #le joueur a saisi une commande valide, on l'envoie au serveur
     thread_envoi_serveur.set_message(commande_valide)    
 
-def deroulement_tours_de_jeu(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier):
+def deroulement_tours_de_jeu(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, thread_simu_input):
     #demarrage de la partie            
     partie_terminee = False
 
     #on boucle tant que personne n'a gagné la partie
     while not partie_terminee:
 
-        (mon_tour, partie_terminee) = attendre_son_tour(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, partie_terminee)
+        (mon_tour, partie_terminee) = attendre_son_tour(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, thread_simu_input, partie_terminee)
 
         #c'est mon tour
         if mon_tour and not partie_terminee:
@@ -189,16 +204,18 @@ def client_main():
     thread_input_clavier = Partie_lecture_entree_clavier()
     thread_envoi_serveur = Partie_envoie_messages_serveur(connexion_avec_serveur)
     thread_recep_serveur = Partie_reception_messages_serveur(connexion_avec_serveur)
+    thread_simu_input = Simu_saisie_clavier()
 
     thread_input_clavier.start()
     thread_envoi_serveur.start()
     thread_recep_serveur.start()
+    thread_simu_input.start()
 
     print("attente demarrage partie ")
     attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur, thread_input_clavier)
 
     print("la partie est demarree ")
-    deroulement_tours_de_jeu(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier)
+    deroulement_tours_de_jeu(thread_recep_serveur, thread_envoi_serveur, thread_input_clavier, thread_simu_input)
 
     print("fin de partie")
     fermeture_connexion_serveur(connexion_avec_serveur)
