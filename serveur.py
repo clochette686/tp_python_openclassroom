@@ -110,7 +110,7 @@ def traitement_messages_clients(clients_connectes):
                         msg_recu = client.recv(1024)
                         msg_recu = msg_recu.decode()
                         print("Reçu {}".format(msg_recu))
-                        if msg_recu.upper() == 'C':
+                        if msg_recu.rstrip().upper() == 'C':
                                 #demarrage de la partie, on sort de la boucle et on passe à la boucle suivante
                                 partie_demarree = True
 
