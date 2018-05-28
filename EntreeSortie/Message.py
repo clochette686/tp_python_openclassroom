@@ -1,51 +1,61 @@
 import json
+from enum import Enum
 
-class MessageClientServeur:
+class Status(Enum):
+    INIT                    = 0
+    CONNEXION_ACCEPTEE      = 1
+    CONNEXION_REFUSEE       = 2
+    ATTENTE_DEMARRAGE       = 3
+    PARTIE_DEMARREE         = 4
+    ATTENTE_TOUR_DE_JEU     = 5
+    MON_TOUR                = 6
+    PARTIE_TERMINEE         = 7
 
-    def __init__(self, message_client_serveur = None):
-        if message_client_serveur is None:
-             self.json_data = dict()
-             self.json_data['message'] = ""
-             self.json_data['connexion_acceptee'] = False
-             self.json_data['premier_joueur'] = False
-             self.json_data['partie_demarree'] = False
-             self.json_data['mon_tour'] = False
-             self.json_data['partie_terminee'] = False
-        else:
-            self.json_data = json.loads(message_client_serveur)
+
+
+
+class MessageServeur:
+
+    def __init__(self):
+        self.json_data = dict()
+        self.json_data['message'] = ""
+        self.json_data['status'] = Status.INIT.name
+        self.json_data['numero_joueur'] = -1
+
+
 
     def modifier_message(self, message):
         self.json_data['message'] = message
 
-    def modifier_connexion_acceptee(self, valeur):
-        self.json_data['connexion_acceptee'] = valeur
 
-    def modifier_premier_joueur(self, valeur):
-        self.json_data['premier_joueur'] = valeur
+    def modifier_numero_joueur(self, valeur):
+        self.json_data['numero_joueur'] = valeur
 
-    def modifier_partie_demarree(self, valeur):
-        self.json_data['partie_demarree'] = valeur
-
-    def modifier_mon_tour(self, valeur):
-        self.json_data['mon_tour'] = valeur        
-
-    def modifier_partie_terminee(self, valeur):
-        self.json_data['partie_terminee'] = valeur
+    def modifier_status(self, valeur):
+        if valeur in Status:
+            self.json_data['status'] = valeur
 
     def exporter_json_message(self):
         return json.dumps(self.json_data)
 
+    def importer_json_message(self, message):
+        json_message = json.loads(message)
+        for key in self.json_data.keys():
+            if key in json_message.keys():
+                self.json_data[key] = json_message[key]
+
+
     
-json_test = MessageClientServeur()
+json_test = MessageServeur()
 
 json_test.modifier_message("plop")
-json_test.modifier_connexion_acceptee(True)
+json_test.modifier_status(Status.CONNEXION_ACCEPTEE.name)
 
 json_test_str = json_test.exporter_json_message()
 print(json_test_str)
 
-json_test_2 = MessageClientServeur('{"connexion_acceptee": false, "partie_demarree": false,\
-                                     "mon_tour": true, "partie_terminee": true, "message": "bouhhh",\
-                                     "premier_joueur": true}')        
-print(json_test_2.json_data['message'])
+json_test_2 = MessageServeur()
+json_test_2.importer_json_message('{"message": "booooooouhhh", "status": "ATTENTE_TOUR_DE_JEU",\
+                                     "numero_joueur": true, "inutile": "plop"}')
+print(json_test_2.json_data)
     

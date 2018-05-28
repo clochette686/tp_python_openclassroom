@@ -3,9 +3,7 @@ from threading import Thread
 from threading import RLock
 import re
 
-import sys
-#import msvcrt
-from select import select
+import EntreeSortie.Message
 
 import time
 
