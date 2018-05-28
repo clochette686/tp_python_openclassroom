@@ -1,49 +1,51 @@
-import re
+import json
 
 class MessageClientServeur:
 
     def __init__(self, message_client_serveur = None):
         if message_client_serveur is None:
-            self.message = ""
-            self.partie_commencee = False
-            self.mon_tour = False
-            self.partie_terminee = False
+             self.json_data = dict()
+             self.json_data['message'] = ""
+             self.json_data['connexion_acceptee'] = False
+             self.json_data['premier_joueur'] = False
+             self.json_data['partie_demarree'] = False
+             self.json_data['mon_tour'] = False
+             self.json_data['partie_terminee'] = False
         else:
-            valeurs = self.analyse_message_client_serveur(message_client_serveur)
-            self.message = valeurs[1]
-            self.partie_commencee = valeurs[2]
-            self.mon_tour = valeurs[3]
-            self.partie_terminee = valeurs[4]            
-            
-    def analyse_message_client_serveur(self, message):
-        recherche = r'^{ *message: (.*), *partie_commencee: (.*), *mon_tour: (.*), *partie_terminee: (.*)}$'
-        valeurs = re.split( recherche, message)
-        print(valeurs)
+            self.json_data = json.loads(message_client_serveur)
 
-    def set_message(self, message):
-        self.message = message
+    def modifier_message(self, message):
+        self.json_data['message'] = message
 
-    def set_partie_commencee(self, booleen):
-        self.partie_commencee = booleen
+    def modifier_connexion_acceptee(self, valeur):
+        self.json_data['connexion_acceptee'] = valeur
 
-    def set_mon_tour(self, booleen):
-        self.mon_tour = booleen
+    def modifier_premier_joueur(self, valeur):
+        self.json_data['premier_joueur'] = valeur
 
-    def set_partie_terminee(self, booleen):
-        self.partie_terminee = booleen
-        
-    def creer_message_depuis_valeurs(self):
-        message = "{ "
-        message += "message: '" + self.message + "', "
-        message += "partie_commencee: " + str(self.partie_commencee) + ", "
-        message += "mon_tour: " + str(self.mon_tour) + ", "
-        message += "partie_terminee: " + str(self.partie_terminee)
-        message += "}"
-        print(message)
-        return message
+    def modifier_partie_demarree(self, valeur):
+        self.json_data['partie_demarree'] = valeur
+
+    def modifier_mon_tour(self, valeur):
+        self.json_data['mon_tour'] = valeur        
+
+    def modifier_partie_terminee(self, valeur):
+        self.json_data['partie_terminee'] = valeur
+
+    def exporter_json_message(self):
+        return json.dumps(self.json_data)
+
     
-m = MessageClientServeur()
-m.set_message("plop salut")
-message = m.creer_message_depuis_valeurs()
-#message = "{message: 'bonjour', partie_commencee: False, mon_tour: False, partie_terminee: False}"
-m.analyse_message_client_serveur(message)
+json_test = MessageClientServeur()
+
+json_test.modifier_message("plop")
+json_test.modifier_connexion_acceptee(True)
+
+json_test_str = json_test.exporter_json_message()
+print(json_test_str)
+
+json_test_2 = MessageClientServeur('{"connexion_acceptee": false, "partie_demarree": false,\
+                                     "mon_tour": true, "partie_terminee": true, "message": "bouhhh",\
+                                     "premier_joueur": true}')        
+print(json_test_2.json_data['message'])
+    
