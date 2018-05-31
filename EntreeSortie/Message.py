@@ -10,6 +10,8 @@ class Status(Enum):
     ATTENTE_TOUR_DE_JEU     = 5
     MON_TOUR                = 6
     PARTIE_TERMINEE         = 7
+    DECONNEXION             = 8
+    DECONNECTE              = 9
 
 
 
@@ -44,7 +46,14 @@ class MessageServeur:
             if key in json_message.keys():
                 self.json_data[key] = json_message[key]
 
+    def lire_status(self):
+        return self.json_data['status']
 
+    def lire_message(self):
+        return self.json_data['message']
+
+    def lire_numero_joueur(self):
+        return self.json_data['numero_joueur']
     
 json_test = MessageServeur()
 

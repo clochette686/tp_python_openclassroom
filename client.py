@@ -3,7 +3,9 @@ from threading import Thread
 from threading import RLock
 import re
 
-import EntreeSortie.Message
+from EntreeSortie.Message import MessageServeur
+from EntreeSortie.Message import Status
+from EntreeSortie.SortieConsole import AffichageConsole
 
 import time
 
@@ -50,6 +52,14 @@ class Partie_reception_messages_serveur(Thread):
                 message = self.messages_recus.pop(0)
                 messages.append(message.decode())
             return messages
+
+    def get_message(self):
+        with self.verrou_msg_a_lire:
+            if len(self.messages_recus) > 0:
+                message = self.messages_recus.pop(0)
+            else:
+                message = None
+            return message
 
     def run(self):
         while self.connection_active:
@@ -187,9 +197,21 @@ def fermeture_connexion_serveur(connexion_avec_serveur):
     print("Fermeture de la connexion")
     connexion_avec_serveur.close()    
 
-def client_main():
-    connexion_avec_serveur = connexion_au_serveur()
+def reception_message_serveur(thread_recep_serveur):
 
+    message = None
+    while message == None:
+        thread_recep_serveur.get_message()
+    message_json = MessageServeur()
+    message_json.importer_json_message(message)
+    return message_json
+
+def client_main():
+    status = Status.INIT
+    affichage = AffichageConsole()
+    mon_numero_joueur = -1
+
+    connexion_avec_serveur = connexion_au_serveur()
 
     #demarrer les thread de communication
     thread_input_clavier = Partie_lecture_entree_clavier()
@@ -199,6 +221,70 @@ def client_main():
     thread_input_clavier.start()
     thread_envoi_serveur.start()
     thread_recep_serveur.start()
+
+    while status != Status.DECONNECTE:
+
+        if status == Status.INIT
+            message_serveur = reception_message_serveur(thread_recep_serveur)
+            status = message_serveur.lire_status()
+            message_recu = message_serveur.lire_message()
+            mon_numero_joueur = message_serveur.lire_numero_joueur()
+            affichage.afficheMessage(message_recu)
+            #suite : CONNEXION_REFUSEE ou CONNECION_ACCEPTEE
+
+        elif status == Status.CONNEXION_REFUSEE:
+            thread_envoi_serveur.connection_active = False
+            thread_input_clavier.connection_active = False
+            thread_recep_serveur.connection_active = False
+            status = Status.DECONNECTE
+
+        elif status == Status.CONNEXION_ACCEPTEE:
+            if mon_numero_joueur == 1:
+                #c'est à moi de demarrer la partie avec un input bloquant
+                #une fois qu'une commande correcte est saisie
+                status = Status.PARTIE_DEMARREE
+            else:
+                message_serveur = reception_message_serveur(thread_recep_serveur)
+                status = message_serveur.lire_status()
+                message_recu = message_serveur.lire_message()
+                mon_numero_joueur = message_serveur.lire_numero_joueur()
+                affichage.afficheMessage(message_recu)
+                #suite PARTIE_DEMARREE
+
+        elif status == Status.PARTIE_DEMARREE:
+            message_serveur = reception_message_serveur(thread_recep_serveur)
+            status = message_serveur.lire_status()
+            message_recu = message_serveur.lire_message()
+            mon_numero_joueur = message_serveur.lire_numero_joueur()
+            affichage.afficheMessage(message_recu)
+            #suite ATTENTE_TOUR_DE_JEU
+
+        elif status == Status.ATTENTE_TOUR_DE_JEU:
+            message_serveur = reception_message_serveur(thread_recep_serveur)
+            status = message_serveur.lire_status()
+            message_recu = message_serveur.lire_message()
+            mon_numero_joueur = message_serveur.lire_numero_joueur()
+            affichage.afficheMessage(message_recu)
+            #suite : MON_TOUR ou PARTIE_FINIE
+
+        elif status == Status.MON_TOUR:
+            #demander saisie commande valide
+            #envoi au serveur
+            status = Status.ATTENTE_TOUR_DE_JEU
+
+        elif status == Status.PARTIE_TERMINEE:
+            message_serveur = reception_message_serveur(thread_recep_serveur)
+            status = message_serveur.lire_status()
+            message_recu = message_serveur.lire_message()
+            mon_numero_joueur = message_serveur.lire_numero_joueur()
+            affichage.afficheMessage(message_recu)
+            #suite : DECONNEXION
+
+        elif status == Status.DECONNEXION:
+            #gérer la deconnexion
+            status = Status.DECONNECTE
+
+
 
     print("attente demarrage partie ")
     attente_demarrage_partie(thread_envoi_serveur, thread_recep_serveur, thread_input_clavier)
