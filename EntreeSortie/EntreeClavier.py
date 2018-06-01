@@ -62,4 +62,14 @@ class SaisieClavier:
                 print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
         return (lettre.upper(), chiffre, quitter)     
                 
-                
+    def demarragePartie(self):
+        choixValide = False
+        choix = ""
+
+        while not choixValide:
+            print("Veuillez entrer la commande \"C\" pour demarrer la partie\n")
+            choix = input()
+            if choix.upper() == 'C':
+                choixValide = True
+
+        return choix
