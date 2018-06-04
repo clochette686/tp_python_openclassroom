@@ -8,6 +8,8 @@ from EntreeSortie.SortieConsole import AffichageConsole
 import glob
 from EntreeSortie.Message import MessageServeur
 from EntreeSortie.Message import Status
+from EntreeSortie.Message import MessageClient
+from EntreeSortie.Message import Status_Client
 
 
 def ouverture_connexion():
@@ -130,7 +132,12 @@ def traitement_messages_clients(clients_connectes):
             # Client est de type socket
             msg_recu = client.recv(1024)
             msg_recu = msg_recu.decode()
-            if msg_recu.rstrip().upper() == 'C':
+            print("msg_recu = ", msg_recu)
+
+            message_client = MessageClient()
+            message_client.importer_json_message(msg_recu)
+
+            if message_client.lire_status() == Status_Client.DEMARRAGE_PARTIE.name:
                 # demarrage de la partie, on sort de la boucle et on passe à la boucle suivante
                 partie_demarree = True
 
@@ -176,7 +183,18 @@ def gestion_partie(labyrinthe, clients_connectes, connexion_principale):
             #attendre sa commande pour deplacer son robot
             commande_recue = client.recv(1024)
             commande_recue = commande_recue.decode()
-            affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(i + 1, commande_recue))
+            print("commande recue = ", commande_recue)
+
+            message_client = MessageClient()
+            message_client.importer_json_message(commande_recue)
+
+            status_client = message_client.lire_status()
+
+            if status_client == Status_Client.QUITTER.name:
+                #gérer le cas où le joueur veut quitter la partie
+                affichage.afficheMessage("Joueur {0} veut quitter la partie".format(i + 1))
+            elif status_client == Status_Client.DEPLACEMENT.name:
+                affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(i + 1, commande_recue))
 
             # faire bouger le robot de ce joueur
 

@@ -8,7 +8,15 @@ class Status(Enum):
     DECONNEXION             = 3
     DECONNECTE              = 4
 
+    def get_nom_status(self, status_enum):
+        return status_enum.name
 
+
+class Status_Client(Enum):
+    DEMARRAGE_PARTIE        = 0
+    DEPLACEMENT             = 1
+    QUITTER                 = 2
+    INIT                    = 3
 
 
 class MessageServeur:
@@ -39,6 +47,37 @@ class MessageServeur:
 
     def lire_message(self):
         return self.json_data['message']
+
+class MessageClient:
+
+    def __init__(self):
+        self.json_data = dict()
+        self.json_data['status'] = Status_Client.INIT.name
+        self.json_data['message'] = ""
+
+    def modifier_message(self, message):
+        self.json_data['message'] = message
+
+    def modifier_status(self, valeur):
+        if valeur in Status_Client:
+            self.json_data['status'] = valeur.name
+
+    def exporter_json_message(self):
+        return json.dumps(self.json_data)
+
+    def importer_json_message(self, message):
+        json_message = json.loads(message)
+        print("json_message = ", json_message)
+        for key in self.json_data.keys():
+            if key in json_message.keys():
+                self.json_data[key] = json_message[key]
+
+    def lire_status(self):
+        return self.json_data['status']
+
+    def lire_message(self):
+        return self.json_data['message']
+
 
 if __name__ == '__main__':
     json_test = MessageServeur()

@@ -5,6 +5,8 @@ import re
 
 from EntreeSortie.Message import MessageServeur
 from EntreeSortie.Message import Status
+from EntreeSortie.Message import MessageClient
+from EntreeSortie.Message import Status_Client
 from EntreeSortie.SortieConsole import AffichageConsole
 from EntreeSortie.EntreeClavier import SaisieClavier
 
@@ -29,7 +31,8 @@ class Partie_envoie_messages_serveur(Thread):
             with self.verrou_msg_a_envoyer:
                 if len(self.message_a_envoyer) > 0:
                     for message in self.message_a_envoyer:
-                        self.serveur.send(message)
+                        check = self.serveur.send(message)
+                        print("envoi de {} caracteres au serveur".format(check))
                     self.message_a_envoyer = []    
             time.sleep(4)        
                     
@@ -114,10 +117,23 @@ def connexion_au_serveur():
     print("Connexion établie avec le serveur sur le port {}".format(port))
     return connexion_avec_serveur
 
+def creer_message_a_envoyer(texte, status):
+    message = MessageClient()
+    message.modifier_message(texte)
+    message.modifier_status(status)
+    return message.exporter_json_message()
+
 def jouer_son_tour(thread_envoi_serveur):
     saisie_clavier = SaisieClavier()
     (lettre, chiffre, quitter) = saisie_clavier.choixDeplacement()
-    thread_envoi_serveur.set_message(lettre)
+
+    if lettre == 'Q':
+        status = Status_Client.QUITTER
+    else:
+        status = Status_Client.DEPLACEMENT
+    message_a_envoyer = creer_message_a_envoyer(lettre, status)
+
+    thread_envoi_serveur.set_message(message_a_envoyer)
 
 def fermeture_connexion_serveur(connexion_avec_serveur):
     print("Fermeture de la connexion")
@@ -137,7 +153,13 @@ def reception_message_serveur(thread_recep_serveur):
 def saisie_demarrage_partie(thread_envoi_serveur):
     saisie_clavier = SaisieClavier()
     commande = saisie_clavier.demarragePartie()
-    thread_envoi_serveur.set_message(commande)
+
+    message_a_envoyer = creer_message_a_envoyer(commande, Status_Client.DEMARRAGE_PARTIE)
+
+    thread_envoi_serveur.set_message(message_a_envoyer)
+
+def compare_status(nom_status, status_a_comparer):
+    return nom_status == status_a_comparer.name
 
 def client_main():
     status = Status.ECOUTE_SERVEUR.name
@@ -152,24 +174,24 @@ def client_main():
     thread_envoi_serveur.start()
     thread_recep_serveur.start()
 
-    while status != Status.DECONNECTE.name:
+    while not compare_status(status, Status.DECONNECTE):
 
-        if status == Status.ECOUTE_SERVEUR.name:
+        if compare_status(status, Status.ECOUTE_SERVEUR):
             message_serveur = reception_message_serveur(thread_recep_serveur)
             if message_serveur is not None:
                 status = message_serveur.lire_status()
                 message_recu = message_serveur.lire_message()
                 affichage.afficheMessage(message_recu)
 
-        elif status == Status.DEMANDE_DEMARRAGE_PARTIE.name:
+        elif compare_status(status, Status.DEMANDE_DEMARRAGE_PARTIE):
             saisie_demarrage_partie(thread_envoi_serveur)
             status = Status.ECOUTE_SERVEUR.name
 
-        elif status == Status.MON_TOUR.name:
+        elif compare_status(status, Status.MON_TOUR):
             jouer_son_tour(thread_envoi_serveur)
             status = Status.ECOUTE_SERVEUR.name
 
-        elif status == Status.DECONNEXION.name:
+        elif compare_status(status, Status.DECONNEXION):
             #gérer la deconnexion
             thread_envoi_serveur.connection_active = False
             thread_recep_serveur.connection_active = False
