@@ -102,7 +102,7 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
             affichage.afficheMessage("Joueur {0} connecté : {1}".format(num_joueur + 1, infos_connexion))
 
             # informer le joueur de succes de la connexion
-            message_a_envoyer = creer_message_a_envoyer( "Vous etes maintenant connectés à la partie\n", 
+            message_a_envoyer = creer_message_a_envoyer("Vous etes maintenant connectés à la partie\n",
                                                          Status.ECOUTE_SERVEUR)
             envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
 
@@ -113,7 +113,9 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
                 status = Status.DEMANDE_DEMARRAGE_PARTIE
             else:
                 status = Status.ECOUTE_SERVEUR
-            message_a_envoyer = creer_message_a_envoyer( affichage_labyrinthe, 
+                message = "\nAttendez que Joueur 1 démarre la partie\n"
+                affichage_labyrinthe += message
+            message_a_envoyer = creer_message_a_envoyer(affichage_labyrinthe,
                                                          status)
             envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
 
@@ -172,6 +174,7 @@ def attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrint
 def gestion_partie(labyrinthe, clients_connectes, connexion_principale):
     affichage = AffichageConsole()
     partie_demarree = True
+    joueur_gagnant = -1
     while partie_demarree:
         for i, client in enumerate(clients_connectes):
             affichage.afficheMessage("Tour de joueur {}".format(i+1))
@@ -189,31 +192,37 @@ def gestion_partie(labyrinthe, clients_connectes, connexion_principale):
             message_client.importer_json_message(commande_recue)
 
             status_client = message_client.lire_status()
+            message_client = message_client.lire_message()
 
             if status_client == Status_Client.QUITTER.name:
                 #gérer le cas où le joueur veut quitter la partie
                 affichage.afficheMessage("Joueur {0} veut quitter la partie".format(i + 1))
             elif status_client == Status_Client.DEPLACEMENT.name:
-                affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(i + 1, commande_recue))
-
-            # faire bouger le robot de ce joueur
+                affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(i + 1, message_client))
+                if labyrinthe.deplacementPossible(i, message_client):
+                    labyrinthe.robots.avancer(i, message_client)
 
             # signaler aux autres joueurs que le joueur X a joué
+            message_a_envoyer = creer_message_a_envoyer("Joueur {0} a déplacé son robot vers le {1}".format(i + 1, message_client),
+                                                        Status.ECOUTE_SERVEUR)
+            for client in clients_connectes:
+                envoyer_message_au_client(message_a_envoyer, client)
 
             # renvoyer le labyrinthe mis à jour à tous les joueurs
             for (num_client, client_connecte) in enumerate(clients_connectes):
                 affichage_labyrinthe = affichage.afficheLabyrinthe(labyrinthe, num_client)
-                message_a_envoyer = creer_message_a_envoyer( affichage_labyrinthe,
+                message_a_envoyer = creer_message_a_envoyer(affichage_labyrinthe,
                                                              Status.ECOUTE_SERVEUR)
                 envoyer_message_au_client(message_a_envoyer, client_connecte)
 
             # verifier si le joueur a gagné
-            # si oui, partie_demarree = False, serveur_lance = False
-            # et on envoie un message à tous les joeurs "Joueur X a gagné"
+            if labyrinthe.partieGagnee(i):
+                partie_demarree = False
+                joueur_gagnant = i
 
-        partie_demarree = False
+
     for (num_client, client) in enumerate(clients_connectes):
-        message_a_envoyer = creer_message_a_envoyer( "Joueur X a gagné", 
+        message_a_envoyer = creer_message_a_envoyer( "Joueur {0} a gagné".format(joueur_gagnant),
                                                      Status.ECOUTE_SERVEUR)
         envoyer_message_au_client(message_a_envoyer, client)        
 

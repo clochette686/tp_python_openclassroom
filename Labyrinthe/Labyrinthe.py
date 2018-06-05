@@ -46,35 +46,33 @@ class Labyrinthe:
         """ vérifie si l'élément à la position (y,x) est un robot """
         return (y,x) in self.robots		
 		
-    def deplacementPossible(self,direction):
+    def deplacementPossible(self, num_joueur, direction):
         """ détermine si un déplacement du robot dans la direction indiquée en parametre
             est possible : la prochaine case est comprise dans la grille et n'est pas un obstacle
             non franchissable """
 
         #créé une copie du robot pour obtenir sa prochaine position
-        robotTemp = Robot(self.robot.y,self.robot.x)
-        robotTemp.avancer(direction)
+        (proch_pos_robot_y, proch_pos_robot_x) = self.robots.get_prochaine_position(num_joueur, direction)
 
         #si le robot se retrouve à la même position qu'un mur
-        if self.estUnMur(robotTemp.y,robotTemp.x):
+        if self.estUnMur(proch_pos_robot_y, proch_pos_robot_x):
             deplacementPossible = False
 
         #si le robot se retrouve en dehors de la grille
-        elif robotTemp.y < 0 or\
-                robotTemp.y >= self.hauteur or\
-                robotTemp.x < 0  or\
-                robotTemp.x >= self.largeur:
+        elif proch_pos_robot_y < 0 or \
+                proch_pos_robot_y >= self.hauteur or \
+                proch_pos_robot_x < 0  or \
+                proch_pos_robot_x >= self.largeur:
             deplacementPossible = False
         else:
             deplacementPossible = True
         return deplacementPossible
 
-    def partieGagnee(self):
+    def partieGagnee(self, num_joueur):
         """ vérifie que le robot est à la même position que l'une des sorties """
-        partie_gagnee = False
-        for (y,x) in self.Robots:
-            partie_gagne = partie_gagnee or self.estUneSortie(y,x)
-        return partie_gagnee
+        (y,x) = self.robots.getPositionRobot(num_joueur)
+        return self.estUneSortie(y,x)
+
 		    
     def ajouterPositionNouveauJoueur(self):
         liste_cases_vides = []
