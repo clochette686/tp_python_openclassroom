@@ -85,4 +85,4 @@ class Labyrinthe:
         else:
             (y_nouveau_robot,x_nouveau_robot) =  random.choice(liste_cases_vides)
             self.robots.ajouterRobot(y_nouveau_robot, x_nouveau_robot)
-            return ""
+            return "OK"
