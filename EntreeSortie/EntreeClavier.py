@@ -44,22 +44,27 @@ class SaisieClavier:
         while not choixValide:
             print("Mouvement robot (E,S,N,O suivi ou non du nombre de déplacement) ou Quitter (Q):")
             choix = input()
-            lettre = choix[0]
-            chiffre = "1"
-            quitter = False
-            if len(choix) > 1:
-                chiffre = str.join("",choix[1:])
-            try:
-                chiffre = int(chiffre)
-                assert lettre.upper() in ['S','N','E','O','Q']
-                quitter = (lettre.upper() == 'Q')
-                if lettre.upper() == 'Q':
-                    assert len(choix) == 1
-                choixValide = True
-            except ValueError:
-                print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
-            except AssertionError:
-                print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
+            if len(choix) > 0:
+                lettre = choix[0]
+                chiffre = "1"
+                quitter = False
+                if len(choix) > 1:
+                    chiffre = str.join("",choix[1:])
+                try:
+                    chiffre = int(chiffre)
+                    assert lettre.upper() in ['S','N','E','O','Q']
+                    quitter = (lettre.upper() == 'Q')
+                    if lettre.upper() == 'Q':
+                        assert len(choix) == 1
+                    choixValide = True
+                except ValueError:
+                    print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
+                except AssertionError:
+                    print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
+            else:
+                lettre = ""
+                chiffre = "1"
+                quitter = False
         return (lettre.upper(), chiffre, quitter)     
                 
     def demarragePartie(self):

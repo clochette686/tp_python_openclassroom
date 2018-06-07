@@ -52,15 +52,18 @@ def choix_labyrinthe():
     labyrinthe = Labyrinthe(nomLabyrintheChoisi)
     return labyrinthe
 
+
 def creer_message_a_envoyer(texte, status):
     message = MessageServeur()
     message.modifier_message(texte)
     message.modifier_status(status)
     return message.exporter_json_message()
 
+
 def envoyer_message_au_client(message, connexion_avec_client):
     message_a_envoyer = message.encode()
     connexion_avec_client.send(message_a_envoyer)
+
 
 def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_connectes):
     # objets utiles
@@ -77,18 +80,17 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
         # accueil du nouveau joueur
         num_joueur = len(clients_connectes)
 
-        message_a_envoyer = creer_message_a_envoyer( "Bonjour Joueur {}!\n".format(num_joueur + 1), 
-                                                     Status.ECOUTE_SERVEUR)
+        message_a_envoyer = creer_message_a_envoyer("Bonjour Joueur {}!\n".format(num_joueur + 1),
+                                                    Status.ECOUTE_SERVEUR)
         envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
-
 
         # ajouter ce nouveau joueur dans le labyrinthe (calcul position depart)
         retour = labyrinthe.ajouterPositionNouveauJoueur()
 
         # vérifie que le robot du joueur peut bien etre rajouté
         if retour != "":
-            message_a_envoyer = creer_message_a_envoyer( "Connexion à la partie impossible : {}".format(retour), 
-                                                         Status.DECONNEXION)
+            message_a_envoyer = creer_message_a_envoyer("Connexion à la partie impossible : {}".format(retour),
+                                                        Status.DECONNEXION)
             envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
 
             connexion_avec_client.close()
@@ -103,7 +105,7 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
 
             # informer le joueur de succes de la connexion
             message_a_envoyer = creer_message_a_envoyer("Vous etes maintenant connectés à la partie\n",
-                                                         Status.ECOUTE_SERVEUR)
+                                                        Status.ECOUTE_SERVEUR)
             envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
 
             # affichage du labyrinthe
@@ -116,7 +118,7 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
                 message = "\nAttendez que Joueur 1 démarre la partie\n"
                 affichage_labyrinthe += message
             message_a_envoyer = creer_message_a_envoyer(affichage_labyrinthe,
-                                                         status)
+                                                        status)
             envoyer_message_au_client(message_a_envoyer, connexion_avec_client)
 
     return clients_connectes
@@ -148,14 +150,15 @@ def traitement_messages_clients(clients_connectes):
 
                 # envoi le message de demarrage à tous les joueurs
                 for (i, client_connecte) in enumerate(clients_connectes):
-                    message_a_envoyer = creer_message_a_envoyer( "Joueur {} vient de démarrer la partie\n".format(num_joueur), 
-                                                                 Status.ECOUTE_SERVEUR)
+                    message_a_envoyer = creer_message_a_envoyer(
+                        "Joueur {} vient de démarrer la partie\n".format(num_joueur),
+                        Status.ECOUTE_SERVEUR)
                     envoyer_message_au_client(message_a_envoyer, client_connecte)
 
                 # envoi le message de demarrage à tous les joueurs
                 for (i, client_connecte) in enumerate(clients_connectes):
-                    message_a_envoyer = creer_message_a_envoyer( "Veuillez attendre votre tour\n", 
-                                                                 Status.ECOUTE_SERVEUR)
+                    message_a_envoyer = creer_message_a_envoyer("Veuillez attendre votre tour\n",
+                                                                Status.ECOUTE_SERVEUR)
                     envoyer_message_au_client(message_a_envoyer, client_connecte)
 
     return partie_demarree
@@ -175,57 +178,60 @@ def gestion_partie(labyrinthe, clients_connectes, connexion_principale):
     affichage = AffichageConsole()
     partie_demarree = True
     joueur_gagnant = -1
+    index_joueur = 0
     while partie_demarree:
-        for i, client in enumerate(clients_connectes):
-            affichage.afficheMessage("Tour de joueur {}".format(i+1))
-            # demarrer le tour de jeu du joueur i+1
-            message_a_envoyer = creer_message_a_envoyer( "Joueur {0}, c'est ton tour".format(i + 1), 
-                                                         Status.MON_TOUR)
+
+        client = clients_connectes[index_joueur]
+        affichage.afficheMessage("Tour de joueur {}".format(index_joueur + 1))
+        # demarrer le tour de jeu du joueur index_joueur+1
+        message_a_envoyer = creer_message_a_envoyer("Joueur {0}, c'est ton tour".format(index_joueur + 1),
+                                                    Status.MON_TOUR)
+        envoyer_message_au_client(message_a_envoyer, client)
+
+        # attendre sa commande pour deplacer son robot
+        commande_recue = client.recv(1024)
+        commande_recue = commande_recue.decode()
+        print("commande recue = ", commande_recue)
+
+        message_client = MessageClient()
+        message_client.importer_json_message(commande_recue)
+
+        status_client = message_client.lire_status()
+        message_client = message_client.lire_message()
+
+        if status_client == Status_Client.QUITTER.name:
+            # gérer le cas où le joueur veut quitter la partie
+            affichage.afficheMessage("Joueur {0} veut quitter la partie".format(index_joueur + 1))
+        elif status_client == Status_Client.DEPLACEMENT.name:
+            affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(index_joueur + 1, message_client))
+            if labyrinthe.deplacementPossible(index_joueur, message_client):
+                labyrinthe.robots.avancer(index_joueur, message_client)
+
+        # signaler aux autres joueurs que le joueur X a joué
+        message_a_envoyer = creer_message_a_envoyer(
+            "Joueur {0} a déplacé son robot vers le {1}".format(index_joueur + 1, message_client),
+            Status.ECOUTE_SERVEUR)
+        for client in clients_connectes:
             envoyer_message_au_client(message_a_envoyer, client)
 
-            #attendre sa commande pour deplacer son robot
-            commande_recue = client.recv(1024)
-            commande_recue = commande_recue.decode()
-            print("commande recue = ", commande_recue)
-
-            message_client = MessageClient()
-            message_client.importer_json_message(commande_recue)
-
-            status_client = message_client.lire_status()
-            message_client = message_client.lire_message()
-
-            if status_client == Status_Client.QUITTER.name:
-                #gérer le cas où le joueur veut quitter la partie
-                affichage.afficheMessage("Joueur {0} veut quitter la partie".format(i + 1))
-            elif status_client == Status_Client.DEPLACEMENT.name:
-                affichage.afficheMessage("Joueur {0} a entré la commande {1}".format(i + 1, message_client))
-                if labyrinthe.deplacementPossible(i, message_client):
-                    labyrinthe.robots.avancer(i, message_client)
-
-            # signaler aux autres joueurs que le joueur X a joué
-            message_a_envoyer = creer_message_a_envoyer("Joueur {0} a déplacé son robot vers le {1}".format(i + 1, message_client),
+        # renvoyer le labyrinthe mis à jour à tous les joueurs
+        for (num_client, client_connecte) in enumerate(clients_connectes):
+            affichage_labyrinthe = affichage.afficheLabyrinthe(labyrinthe, num_client)
+            message_a_envoyer = creer_message_a_envoyer(affichage_labyrinthe,
                                                         Status.ECOUTE_SERVEUR)
-            for client in clients_connectes:
-                envoyer_message_au_client(message_a_envoyer, client)
+            envoyer_message_au_client(message_a_envoyer, client_connecte)
 
-            # renvoyer le labyrinthe mis à jour à tous les joueurs
-            for (num_client, client_connecte) in enumerate(clients_connectes):
-                affichage_labyrinthe = affichage.afficheLabyrinthe(labyrinthe, num_client)
-                message_a_envoyer = creer_message_a_envoyer(affichage_labyrinthe,
-                                                             Status.ECOUTE_SERVEUR)
-                envoyer_message_au_client(message_a_envoyer, client_connecte)
-
-            # verifier si le joueur a gagné
-            if labyrinthe.partieGagnee(i):
-                partie_demarree = False
-                joueur_gagnant = i
-
+        # verifier si le joueur a gagné
+        if labyrinthe.partieGagnee(index_joueur):
+            partie_demarree = False
+            joueur_gagnant = index_joueur + 1
+        else:
+            index_joueur = (index_joueur + 1) % len(clients_connectes)
 
     for (num_client, client) in enumerate(clients_connectes):
-        message_a_envoyer = creer_message_a_envoyer( "Joueur {0} a gagné".format(joueur_gagnant),
-                                                     Status.ECOUTE_SERVEUR)
-        envoyer_message_au_client(message_a_envoyer, client)        
-
+        message_a_envoyer = creer_message_a_envoyer("Joueur {0} a gagné".format(joueur_gagnant),
+                                                    Status.ECOUTE_SERVEUR)
+        envoyer_message_au_client(message_a_envoyer, client)
 
 
 def fermeture_connexion(clients_connectes, connexion_principale):
@@ -234,8 +240,8 @@ def fermeture_connexion(clients_connectes, connexion_principale):
     affichage.afficheMessage("Fermeture de la connexion")
     for (i, client) in enumerate(clients_connectes):
         affichage.afficheMessage("fermeture connection Joueur {0}".format(i + 1))
-        message_a_envoyer = creer_message_a_envoyer( "Merci d'avoir joué. Au revoir.", 
-                                                     Status.DECONNEXION)
+        message_a_envoyer = creer_message_a_envoyer("Merci d'avoir joué. Au revoir.",
+                                                    Status.DECONNEXION)
         envoyer_message_au_client(message_a_envoyer, client)
         client.close()
     connexion_principale.close()
