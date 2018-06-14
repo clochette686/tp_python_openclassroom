@@ -67,7 +67,6 @@ class MessageClient:
 
     def importer_json_message(self, message):
         json_message = json.loads(message)
-        print("json_message = ", json_message)
         for key in self.json_data.keys():
             if key in json_message.keys():
                 self.json_data[key] = json_message[key]

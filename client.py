@@ -1,7 +1,7 @@
 import socket
 from threading import Thread
 from threading import RLock
-import re
+
 
 from EntreeSortie.Message import MessageServeur
 from EntreeSortie.Message import Status
@@ -31,10 +31,9 @@ class Partie_envoie_messages_serveur(Thread):
             with self.verrou_msg_a_envoyer:
                 if len(self.message_a_envoyer) > 0:
                     for message in self.message_a_envoyer:
-                        check = self.serveur.send(message)
-                        print("envoi de {} caracteres au serveur".format(check))
+                        self.serveur.send(message)
                     self.message_a_envoyer = []    
-            time.sleep(4)        
+            time.sleep(1)
                     
 
 class Partie_reception_messages_serveur(Thread):
@@ -75,7 +74,7 @@ class Partie_reception_messages_serveur(Thread):
                             self.messages_recus.append(message_json)
                     else:
                         self.messages_recus.append(message)
-            time.sleep(2)
+            time.sleep(1)
 
 class Partie_lecture_entree_clavier(Thread):
 
@@ -105,7 +104,7 @@ class Partie_lecture_entree_clavier(Thread):
             if commande != "": 
                 with self.verrou_cmd_utilisateur:
                     self.saisie_utilisateur.append(commande)
-            time.sleep(4)    
+            time.sleep(1)
        
 
 
@@ -198,8 +197,8 @@ def client_main():
             fermeture_connexion_serveur(connexion_avec_serveur)
             status = Status.DECONNECTE.name
 
-
-client_main()    
+if __name__ == "__main__":
+    client_main()
 
 
 

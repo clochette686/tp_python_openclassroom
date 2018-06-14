@@ -33,9 +33,11 @@ class AffichageConsole:
         affichage = ""
         for ligne in imageLabyrinthe:
             affichage += str.join("",ligne) + "\n"
-        print (affichage)
         return affichage
 
     def afficheMessage(self,message):
         """ gere l'affichage des messages à l'utilisateur """
         print(message)
+
+    def affichage_numero_joueur(self,num_joueur):
+        return str(num_joueur + 1)
