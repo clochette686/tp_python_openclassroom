@@ -17,6 +17,8 @@ class Status_Client(Enum):
     DEPLACEMENT             = 1
     QUITTER                 = 2
     INIT                    = 3
+    MURER                   = 4
+    PERCER                  = 5
 
 
 class MessageServeur:

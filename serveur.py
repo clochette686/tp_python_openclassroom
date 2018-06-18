@@ -201,6 +201,19 @@ def quitter_la_partie(num_joueur):
                              .format(affichage.affichage_numero_joueur(num_joueur)))
     affichage.afficheMessage("TODO A IMPLEMENTER")
 
+
+def murer_une_porte(num_joueur, message):
+    affichage = AffichageConsole()
+    affichage.afficheMessage("Joueur {0} veut murer la porte dans la direction {1}"
+                             .format(affichage.affichage_numero_joueur(num_joueur), message))
+    affichage.afficheMessage("TODO A IMPLEMENTER")
+
+def percer_un_mur(num_joueur, message):
+    affichage = AffichageConsole()
+    affichage.afficheMessage("Joueur {0} veut percer un mur dans la direction {1}"
+                             .format(affichage.affichage_numero_joueur(num_joueur), message))
+    affichage.afficheMessage("TODO A IMPLEMENTER")
+
 def deplacer_robot(num_joueur, message, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
 
@@ -254,6 +267,12 @@ def gestion_partie(labyrinthe, clients_connectes):
         if compare_status(status_client, Status_Client.QUITTER):
             # gérer le cas où le joueur veut quitter la partie
             quitter_la_partie(index_joueur)
+
+        elif compare_status(status_client, Status_Client.MURER):
+            murer_une_porte(index_joueur, message_client)
+
+        elif compare_status(status_client, Status_Client.PERCER):
+            percer_un_mur(index_joueur, message_client)
 
         elif compare_status(status_client, Status_Client.DEPLACEMENT):
             deplacer_robot(index_joueur, message_client, labyrinthe, clients_connectes)

@@ -51,20 +51,24 @@ class SaisieClavier:
         choixValide = False
 
         while not choixValide:
-            affichage.afficheMessage("Mouvement robot (E,S,N,O suivi ou non du nombre de déplacement) ou Quitter (Q):")
+            affichage.afficheMessage("Deplacer le robot (E,S,N,O suivi ou non du nombre de déplacement), \
+murer une porte (M suivi de E,S,N ou O), percer une porte (P suivi de E,S,N ou O), ou Quitter (Q):")
             choix = input()
             if len(choix) > 0:
-                lettre = choix[0]
-                chiffre = "1"
+                action_demandee = choix[0]
+                option = "1"
                 quitter = False
                 if len(choix) > 1:
-                    chiffre = str.join("",choix[1:])
+                    option = str.join("",choix[1:])
                 try:
-                    chiffre = int(chiffre)
-                    assert lettre.upper() in ['S','N','E','O','Q']
-                    quitter = (lettre.upper() == 'Q')
-                    if lettre.upper() == 'Q':
+                    assert action_demandee.upper() in ['S', 'N', 'E', 'O', 'Q', 'M', 'P']
+                    if action_demandee.upper() in ['S', 'N', 'E', 'O']:
+                        option = int(option)
+                    elif action_demandee.upper() in ['M', 'P']:
+                        assert option.upper() in ['S', 'N', 'E', 'O']
+                    elif action_demandee.upper() == "Q":
                         assert len(choix) == 1
+                        quitter = True
                     choixValide = True
                 except ValueError:
                     affichage.afficheMessage("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
@@ -74,7 +78,7 @@ class SaisieClavier:
                 lettre = ""
                 chiffre = "1"
                 quitter = False
-        return (lettre.upper(), chiffre, quitter)     
+        return (action_demandee.upper(), option, quitter)
                 
     def demarragePartie(self):
         affichage = AffichageConsole()

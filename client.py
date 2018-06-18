@@ -149,12 +149,19 @@ def creer_message_a_envoyer(texte, status):
 
 def jouer_son_tour(thread_envoi_serveur):
     saisie_clavier = SaisieClavier()
-    (lettre, chiffre, quitter) = saisie_clavier.choixDeplacement()
+    (lettre, option, quitter) = saisie_clavier.choixDeplacement()
 
     if lettre == 'Q':
         status = Status_Client.QUITTER
+    elif lettre == 'M':
+        status = Status_Client.MURER
+        lettre = option
+    elif lettre == 'P':
+        status = Status_Client.PERCER
+        lettre = option
     else:
         status = Status_Client.DEPLACEMENT
+        #on ignore pour le moment le nombre suivant le deplacement
     message_a_envoyer = creer_message_a_envoyer(lettre, status)
 
     thread_envoi_serveur.set_message(message_a_envoyer)
