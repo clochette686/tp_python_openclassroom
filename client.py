@@ -34,7 +34,32 @@ class Partie_envoie_messages_serveur(Thread):
                         self.serveur.send(message)
                     self.message_a_envoyer = []    
             time.sleep(0.1)
-                    
+
+
+def decouper_message_liste_json_message(message):
+    liste_json_message = []
+
+    if message.count("}{") > 0:
+        message_decoupe = message.split("}{")
+
+        #cas particulier premier message : seulement } a rajouter à la fin
+        premier_message = message_decoupe.pop(0) + "}"
+        liste_json_message.append(premier_message)
+
+        #cas particulier dernier message : seulement { a rajouter au debut
+        dernier_message = "{" + message_decoupe.pop()
+
+        #tous les autres messages s'ils existent n'ont aucune {}
+        for mess in message_decoupe:
+            liste_json_message.append("{" + mess + "}")
+
+        #on rajoute le dernier message dans la liste
+        liste_json_message.append(dernier_message)
+    else:
+        #il y a un seul message json, on l'insere dans la liste
+        liste_json_message.append(message)
+    return liste_json_message
+
 
 class Partie_reception_messages_serveur(Thread):
 
@@ -67,14 +92,13 @@ class Partie_reception_messages_serveur(Thread):
                 message = self.serveur.recv(1024)
                 message = message.decode()
                 if len(message) > 0:
-                    #cas particulier de plusieurs json recu dans un seul message
-                    if message.count("{") > 1:
-                        messages_json = ["{" + message for message in message.split("{")[1:]]
-                        for message_json in messages_json:
-                            self.messages_recus.append(message_json)
-                    else:
-                        self.messages_recus.append(message)
+                    liste_mess = decouper_message_liste_json_message(message)
+                    for mess in liste_mess:
+                        self.messages_recus.append(mess)
+
             time.sleep(0.1)
+
+
 
 class Partie_lecture_entree_clavier(Thread):
 
