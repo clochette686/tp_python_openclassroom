@@ -33,7 +33,7 @@ class Partie_envoie_messages_serveur(Thread):
                     for message in self.message_a_envoyer:
                         self.serveur.send(message)
                     self.message_a_envoyer = []    
-            time.sleep(1)
+            time.sleep(0.1)
                     
 
 class Partie_reception_messages_serveur(Thread):
@@ -74,7 +74,7 @@ class Partie_reception_messages_serveur(Thread):
                             self.messages_recus.append(message_json)
                     else:
                         self.messages_recus.append(message)
-            time.sleep(1)
+            time.sleep(0.1)
 
 class Partie_lecture_entree_clavier(Thread):
 
@@ -104,7 +104,7 @@ class Partie_lecture_entree_clavier(Thread):
             if commande != "": 
                 with self.verrou_cmd_utilisateur:
                     self.saisie_utilisateur.append(commande)
-            time.sleep(1)
+            #time.sleep(1)
        
 
 
