@@ -1,9 +1,14 @@
+from EntreeSortie.SortieConsole import AffichageConsole
+
+
 class SaisieClavier:
 
     def reponseOuiNon(self):
         """ Demande au joueur d'entrer la réponse 'O' ou 'N'
             tant que la réponse saisie n'est pas valide """
-        
+
+        affichage = AffichageConsole()
+
         choixValide = False
         choix = ""
         while not choixValide:
@@ -13,17 +18,19 @@ class SaisieClavier:
                 assert choix.upper() in ['O','N']
                 choixValide = True
             except AssertionError:
-                print("Veuillez entrer O ou N")
+                affichage.afficheMessage("Veuillez entrer O ou N")
         return choix.upper()        
 
     def choixLabyrinthe(self,limite):
         """ Demande au joueur d'entrer le numéro d'un des labyrinthes de la liste
             tant que la réponse saisie n'est pas un entier compris entre 1 et
             le nombre de labyrinthes disponibles """
+        affichage = AffichageConsole()
+
         choixValide = False
         choix = ""
         while not choixValide:
-            print("Entrez un numéro de labyrinthe pour commencer à jouer :")
+            affichage.afficheMessage("Entrez un numéro de labyrinthe pour commencer à jouer :")
             choix = input()
             try:
                 choix = int(choix)
@@ -31,18 +38,20 @@ class SaisieClavier:
                 assert choix <= limite
                 choixValide = True
             except ValueError:
-                print("Votre choix doit être un entier")
+                affichage.afficheMessage("Votre choix doit être un entier")
             except AssertionError:
-                print("Votre choix doit être compris entre 1 et {0}".format(limite))
+                affichage.afficheMessage("Votre choix doit être compris entre 1 et {0}".format(limite))
         return choix
                 
     def choixDeplacement(self):
         """ Demande au joueur d'entrer une commande de déplacement ou la commande pour quitter la partie
             tant que la réponse saisie n'est pas au bon format"""
+        affichage = AffichageConsole()
+
         choixValide = False
-        choix = ""
+
         while not choixValide:
-            print("Mouvement robot (E,S,N,O suivi ou non du nombre de déplacement) ou Quitter (Q):")
+            affichage.afficheMessage("Mouvement robot (E,S,N,O suivi ou non du nombre de déplacement) ou Quitter (Q):")
             choix = input()
             if len(choix) > 0:
                 lettre = choix[0]
@@ -58,9 +67,9 @@ class SaisieClavier:
                         assert len(choix) == 1
                     choixValide = True
                 except ValueError:
-                    print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
+                    affichage.afficheMessage("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
                 except AssertionError:
-                    print("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
+                    affichage.afficheMessage("Le format d'une commande doit être une lettre (S,N,E,O) suivi ou non d'un chiffre ou Q pour quitter")
             else:
                 lettre = ""
                 chiffre = "1"
@@ -68,11 +77,13 @@ class SaisieClavier:
         return (lettre.upper(), chiffre, quitter)     
                 
     def demarragePartie(self):
+        affichage = AffichageConsole()
+
         choixValide = False
         choix = ""
 
         while not choixValide:
-            print("Veuillez entrer la commande \"C\" pour demarrer la partie\n")
+            affichage.afficheMessage("Veuillez entrer la commande \"C\" pour demarrer la partie\n")
             choix = input()
             if choix.upper() == 'C':
                 choixValide = True

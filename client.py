@@ -133,11 +133,12 @@ class Partie_lecture_entree_clavier(Thread):
 
 
 def connexion_au_serveur():
+    affichage = AffichageConsole()
     hote = "localhost"
     port = 12800    
     connexion_avec_serveur = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connexion_avec_serveur.connect((hote, port))
-    print("Connexion établie avec le serveur sur le port {}".format(port))
+    affichage.afficheMessage("Connexion établie avec le serveur sur le port {}".format(port))
     return connexion_avec_serveur
 
 def creer_message_a_envoyer(texte, status):
@@ -159,7 +160,9 @@ def jouer_son_tour(thread_envoi_serveur):
     thread_envoi_serveur.set_message(message_a_envoyer)
 
 def fermeture_connexion_serveur(connexion_avec_serveur):
-    print("Fermeture de la connexion")
+    affichage = AffichageConsole()
+
+    affichage.afficheMessage("Fermeture de la connexion")
     connexion_avec_serveur.close()    
 
 def reception_message_serveur(thread_recep_serveur):
