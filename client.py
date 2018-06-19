@@ -28,12 +28,11 @@ class Partie_envoie_messages_serveur(Thread):
     
     def run(self):
         while self.connection_active:
-            with self.verrou_msg_a_envoyer:
-                if len(self.message_a_envoyer) > 0:
+            if len(self.message_a_envoyer) > 0:
+                with self.verrou_msg_a_envoyer:
                     for message in self.message_a_envoyer:
                         self.serveur.send(message)
-                    self.message_a_envoyer = []    
-            time.sleep(0.1)
+                    self.message_a_envoyer = []
 
 
 def decouper_message_liste_json_message(message):
@@ -88,15 +87,13 @@ class Partie_reception_messages_serveur(Thread):
 
     def run(self):
         while self.connection_active:
-            with self.verrou_msg_a_lire:
-                message = self.serveur.recv(1024)
-                message = message.decode()
-                if len(message) > 0:
+            message = self.serveur.recv(1024)
+            message = message.decode()
+            if len(message) > 0:
+                with self.verrou_msg_a_lire:
                     liste_mess = decouper_message_liste_json_message(message)
                     for mess in liste_mess:
                         self.messages_recus.append(mess)
-
-            time.sleep(0.1)
 
 
 
