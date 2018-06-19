@@ -15,3 +15,7 @@ class Portes:
 
     def getImage(self):
         return self.imagePorte
+
+    def suppr_porte(self, pos_y, pos_x):
+        self.listePortes.remove((pos_y, pos_x))
+

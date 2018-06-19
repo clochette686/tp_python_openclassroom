@@ -86,3 +86,18 @@ class Labyrinthe:
             (y_nouveau_robot,x_nouveau_robot) =  random.choice(liste_cases_vides)
             self.robots.ajouterRobot(y_nouveau_robot, x_nouveau_robot)
             return "OK"
+
+    def murer_porte(self, num_joueur, direction):
+        #recuperer la position de la porte ciblee
+        (pos_porte_y, pos_porte_x) = self.robots.get_prochaine_position(num_joueur, direction)
+        if self.estUnePorte(pos_porte_y,pos_porte_x):
+            self.portes.suppr_porte(pos_porte_y, pos_porte_x)
+            self.murs.ajouterMur(pos_porte_y,pos_porte_x)
+
+    def percer_mur(self, num_joueur, direction):
+        #recuperer la position de la porte ciblee
+        (pos_mur_y, pos_mur_x) = self.robots.get_prochaine_position(num_joueur, direction)
+
+        if self.estUnMur(pos_mur_y,pos_mur_x):
+            self.murs.suppr_mur(pos_mur_y, pos_mur_x)
+            self.portes.ajouterPorte(pos_mur_y,pos_mur_x)

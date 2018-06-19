@@ -20,17 +20,15 @@ class Robots:
         return self.listeRobots[num_joueur]
 
     def get_prochaine_position(self, num_joueur, direction):
-        """ permet d'avancer le robot d'une case dans la direction
-            indiquée en parametre """
         (y, x) = self.getPositionRobot(num_joueur)
         proch_pos = (-1,-1)
-        if direction == 'S':
+        if direction.upper() == 'S':
             proch_pos = (y + 1, x)
-        elif direction == 'N':
+        elif direction.upper() == 'N':
             proch_pos = (y - 1, x)
-        elif direction == 'O':
+        elif direction.upper() == 'O':
             proch_pos = (y, x - 1)
-        elif direction == 'E':
+        elif direction.upper() == 'E':
             proch_pos = (y, x + 1)
         return proch_pos
 

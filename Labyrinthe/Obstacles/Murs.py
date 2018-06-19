@@ -15,3 +15,6 @@ class Murs:
 
     def getImage(self):
         return self.imageMur
+
+    def suppr_mur(self, pos_y, pos_x):
+        self.listeMurs.remove((pos_y, pos_x))

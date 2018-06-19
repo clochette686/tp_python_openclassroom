@@ -66,6 +66,7 @@ murer une porte (M suivi de E,S,N ou O), percer une porte (P suivi de E,S,N ou O
                         option = int(option)
                     elif action_demandee.upper() in ['M', 'P']:
                         assert option.upper() in ['S', 'N', 'E', 'O']
+                        option = option.upper()
                     elif action_demandee.upper() == "Q":
                         assert len(choix) == 1
                         quitter = True

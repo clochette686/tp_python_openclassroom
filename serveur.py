@@ -202,31 +202,55 @@ def quitter_la_partie(num_joueur):
     affichage.afficheMessage("TODO A IMPLEMENTER")
 
 
-def murer_une_porte(num_joueur, message):
+def murer_une_porte(num_joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
     affichage.afficheMessage("Joueur {0} veut murer la porte dans la direction {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), message))
-    affichage.afficheMessage("TODO A IMPLEMENTER")
+                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
 
-def percer_un_mur(num_joueur, message):
+    labyrinthe.murer_porte(num_joueur, direction)
+
+    # signaler aux autres joueurs que le joueur X a joué
+    envoyer_message_tous_les_joueurs("Joueur {0} a muré la porte dans la direction {1}"
+                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
+                                     Status.ECOUTE_SERVEUR,
+                                     clients_connectes)
+
+    # renvoyer le labyrinthe mis à jour à tous les joueurs
+    envoyer_affichage_labyrinthe_tous_les_joueurs(labyrinthe,
+                                                  Status.ECOUTE_SERVEUR,
+                                                  clients_connectes)
+
+def percer_un_mur(num_joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
     affichage.afficheMessage("Joueur {0} veut percer un mur dans la direction {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), message))
-    affichage.afficheMessage("TODO A IMPLEMENTER")
+                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
 
-def deplacer_robot(num_joueur, message, labyrinthe, clients_connectes):
+    labyrinthe.percer_mur(num_joueur, direction)
+
+    # signaler aux autres joueurs que le joueur X a joué
+    envoyer_message_tous_les_joueurs("Joueur {0} a percé le mur dans la direction {1}"
+                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
+                                     Status.ECOUTE_SERVEUR,
+                                     clients_connectes)
+
+    # renvoyer le labyrinthe mis à jour à tous les joueurs
+    envoyer_affichage_labyrinthe_tous_les_joueurs(labyrinthe,
+                                                  Status.ECOUTE_SERVEUR,
+                                                  clients_connectes)
+
+def deplacer_robot(num_joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
 
 
     affichage.afficheMessage("Joueur {0} a entré la commande {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), message))
+                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
 
-    if labyrinthe.deplacementPossible(num_joueur, message):
-        labyrinthe.robots.avancer(num_joueur, message)
+    if labyrinthe.deplacementPossible(num_joueur, direction):
+        labyrinthe.robots.avancer(num_joueur, direction)
 
     # signaler aux autres joueurs que le joueur X a joué
     envoyer_message_tous_les_joueurs("Joueur {0} a déplacé son robot vers le {1}"
-                                     .format(affichage.affichage_numero_joueur(num_joueur), message),
+                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
                                      Status.ECOUTE_SERVEUR,
                                      clients_connectes)
 
@@ -269,10 +293,10 @@ def gestion_partie(labyrinthe, clients_connectes):
             quitter_la_partie(index_joueur)
 
         elif compare_status(status_client, Status_Client.MURER):
-            murer_une_porte(index_joueur, message_client)
+            murer_une_porte(index_joueur, message_client, labyrinthe, clients_connectes)
 
         elif compare_status(status_client, Status_Client.PERCER):
-            percer_un_mur(index_joueur, message_client)
+            percer_un_mur(index_joueur, message_client, labyrinthe, clients_connectes)
 
         elif compare_status(status_client, Status_Client.DEPLACEMENT):
             deplacer_robot(index_joueur, message_client, labyrinthe, clients_connectes)
