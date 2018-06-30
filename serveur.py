@@ -10,6 +10,8 @@ from EntreeSortie.Message import MessageServeur
 from EntreeSortie.Message import Status
 from EntreeSortie.Message import MessageClient
 from EntreeSortie.Message import Status_Client
+from Joueur.joueur import Joueur
+from Joueur.joueur import Joueurs
 
 
 def ouverture_connexion():
@@ -90,11 +92,12 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
         connexion_avec_client, infos_connexion = connexion.accept()
 
         # accueil du nouveau joueur
-        num_joueur = len(clients_connectes)
+        num_joueur = clients_connectes.get_nombre_joueurs()
+        joueur = Joueur(num_joueur, connexion_avec_client)
 
-        envoyer_message_au_client("Bonjour Joueur {}!\n".format(affichage.affichage_numero_joueur(num_joueur)),
+        envoyer_message_au_client("Bonjour Joueur {}!\n".format(joueur.get_num_joueur()),
                                   Status.ECOUTE_SERVEUR,
-                                  connexion_avec_client)
+                                  joueur.get_connexion())
 
         # ajouter ce nouveau joueur dans le labyrinthe (calcul position depart)
         retour = labyrinthe.ajouterPositionNouveauJoueur()
@@ -103,39 +106,39 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
         if retour != "OK":
             envoyer_message_au_client("Connexion à la partie impossible : {}".format(retour),
                                       Status.DECONNEXION,
-                                      connexion_avec_client)
+                                      joueur.get_connexion())
 
-            connexion_avec_client.close()
+            joueur.get_connexion().close()
 
         else:
 
             # On ajoute le joueur à la liste des clients connectes
-            clients_connectes.append(connexion_avec_client)
+            clients_connectes.ajouter_joueur(joueur)
 
             # affichage en local sur le serveur
-            affichage.afficheMessage("Joueur {0} connecté : {1}".format(affichage.affichage_numero_joueur(num_joueur), infos_connexion))
+            affichage.afficheMessage("Joueur {0} connecté : {1}".format(joueur.get_num_joueur(), infos_connexion))
 
             # informer le joueur de succes de la connexion
             envoyer_message_au_client("Vous etes maintenant connectés à la partie\n",
                                       Status.ECOUTE_SERVEUR,
-                                      connexion_avec_client)
+                                      joueur.get_connexion())
 
             # affichage du labyrinthe
-            affichage_labyrinthe = affichage.afficheLabyrinthe(labyrinthe, num_joueur)
+            affichage_labyrinthe = affichage.afficheLabyrinthe(labyrinthe, joueur.get_index_joueur())
 
             if num_joueur == 0:
                 envoyer_message_au_client(affichage_labyrinthe,
                                           Status.DEMANDE_DEMARRAGE_PARTIE,
-                                          connexion_avec_client)
+                                          joueur.get_connexion())
 
             else:
                 envoyer_message_au_client(affichage_labyrinthe,
                                           Status.ECOUTE_SERVEUR,
-                                          connexion_avec_client)
+                                          joueur.get_connexion())
 
                 envoyer_message_au_client("Attendez que Joueur 1 démarre la partie\n",
                                           Status.ECOUTE_SERVEUR,
-                                          connexion_avec_client)
+                                          joueur.get_connexion())
     return clients_connectes
 
 
@@ -143,7 +146,8 @@ def traitement_messages_clients(clients_connectes, labyrinthe):
     affichage = AffichageConsole()
     partie_demarree = False
     try:
-        clients_a_lire, wlist, xlist = select.select(clients_connectes, [], [], 0.05)
+        liste_connexion = clients_connectes.get_liste_connexions()
+        clients_a_lire, wlist, xlist = select.select(liste_connexion, [], [], 0.05)
     except select.error:
         clients_a_lire = []
     else:
@@ -160,24 +164,25 @@ def traitement_messages_clients(clients_connectes, labyrinthe):
                 # demarrage de la partie, on sort de la boucle et on passe à la boucle suivante
                 partie_demarree = True
 
+                joueur_expediteur = clients_connectes.get_joueur_avec_connexion(client)
                 # envoi le message de demarrage à tous les joueurs
                 envoyer_message_tous_les_joueurs("Joueur {} vient de démarrer la partie\n"
-                                                 .format(affichage.affichage_numero_joueur(clients_connectes.index(client))),
+                                                 .format(joueur_expediteur.get_num_joueur()),
                                                  Status.ECOUTE_SERVEUR,
-                                                 clients_connectes)
+                                                 clients_connectes.get_liste_connexions())
 
                 # envoi le message de demarrage à tous les joueurs
-                envoyer_affichage_labyrinthe_tous_les_joueurs(labyrinthe, Status.ECOUTE_SERVEUR, clients_connectes)
+                envoyer_affichage_labyrinthe_tous_les_joueurs(labyrinthe, Status.ECOUTE_SERVEUR, clients_connectes.get_liste_connexions())
 
                 envoyer_message_tous_les_joueurs("Veuillez attendre votre tour\n",
                                                  Status.ECOUTE_SERVEUR,
-                                                 clients_connectes)
+                                                 clients_connectes.get_liste_connexions())
 
     return partie_demarree
 
 
 def attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrinthe):
-    clients_connectes = []
+    clients_connectes = Joueurs()
     partie_demarree = False
 
     while not partie_demarree:
@@ -195,23 +200,23 @@ def recuperer_message_client(client):
     message_client.importer_json_message(commande_recue)
     return message_client
 
-def quitter_la_partie(num_joueur):
+def quitter_la_partie(joueur):
     affichage = AffichageConsole()
     affichage.afficheMessage("Joueur {0} veut quitter la partie"
-                             .format(affichage.affichage_numero_joueur(num_joueur)))
+                             .format(joueur.get_num_joueur()))
     affichage.afficheMessage("TODO A IMPLEMENTER")
 
 
-def murer_une_porte(num_joueur, direction, labyrinthe, clients_connectes):
+def murer_une_porte(joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
     affichage.afficheMessage("Joueur {0} veut murer la porte dans la direction {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
+                             .format(joueur.get_num_joueur(), direction))
 
-    labyrinthe.murer_porte(num_joueur, direction)
+    labyrinthe.murer_porte(joueur.get_index_joueur(), direction)
 
     # signaler aux autres joueurs que le joueur X a joué
     envoyer_message_tous_les_joueurs("Joueur {0} a muré la porte dans la direction {1}"
-                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
+                                     .format(joueur.get_num_joueur(), direction),
                                      Status.ECOUTE_SERVEUR,
                                      clients_connectes)
 
@@ -220,16 +225,16 @@ def murer_une_porte(num_joueur, direction, labyrinthe, clients_connectes):
                                                   Status.ECOUTE_SERVEUR,
                                                   clients_connectes)
 
-def percer_un_mur(num_joueur, direction, labyrinthe, clients_connectes):
+def percer_un_mur(joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
     affichage.afficheMessage("Joueur {0} veut percer un mur dans la direction {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
+                             .format(joueur.get_num_joueur(), direction))
 
-    labyrinthe.percer_mur(num_joueur, direction)
+    labyrinthe.percer_mur(joueur.get_index_joueur(), direction)
 
     # signaler aux autres joueurs que le joueur X a joué
     envoyer_message_tous_les_joueurs("Joueur {0} a percé le mur dans la direction {1}"
-                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
+                                     .format(joueur.get_num_joueur(), direction),
                                      Status.ECOUTE_SERVEUR,
                                      clients_connectes)
 
@@ -238,19 +243,19 @@ def percer_un_mur(num_joueur, direction, labyrinthe, clients_connectes):
                                                   Status.ECOUTE_SERVEUR,
                                                   clients_connectes)
 
-def deplacer_robot(num_joueur, direction, labyrinthe, clients_connectes):
+def deplacer_robot(joueur, direction, labyrinthe, clients_connectes):
     affichage = AffichageConsole()
 
 
     affichage.afficheMessage("Joueur {0} a entré la commande {1}"
-                             .format(affichage.affichage_numero_joueur(num_joueur), direction))
+                             .format(joueur.get_num_joueur(), direction))
 
-    if labyrinthe.deplacementPossible(num_joueur, direction):
-        labyrinthe.robots.avancer(num_joueur, direction)
+    if labyrinthe.deplacementPossible(joueur.get_index_joueur(), direction):
+        labyrinthe.robots.avancer(joueur.get_index_joueur(), direction)
 
     # signaler aux autres joueurs que le joueur X a joué
     envoyer_message_tous_les_joueurs("Joueur {0} a déplacé son robot vers le {1}"
-                                     .format(affichage.affichage_numero_joueur(num_joueur), direction),
+                                     .format(joueur.get_num_joueur(), direction),
                                      Status.ECOUTE_SERVEUR,
                                      clients_connectes)
 
@@ -273,60 +278,61 @@ def gestion_partie(labyrinthe, clients_connectes):
     index_joueur = 0
     while partie_demarree:
 
-        client = clients_connectes[index_joueur]
+        joueur = clients_connectes.get_joueur_avec_index(index_joueur)
         affichage.afficheMessage("Tour de joueur {}"
-                                 .format(affichage.affichage_numero_joueur(index_joueur)))
+                                 .format(joueur.get_num_joueur()))
 
         # demarrer le tour de jeu du joueur index_joueur+1
         envoyer_message_au_client("Joueur {0}, c'est ton tour"
-                                  .format(affichage.affichage_numero_joueur(index_joueur)),
+                                  .format(joueur.get_num_joueur()),
                                   Status.MON_TOUR,
-                                  client)
+                                  joueur.get_connexion())
 
-        message_recu_client = recuperer_message_client(client)
+        message_recu_client = recuperer_message_client(joueur.get_connexion())
 
         status_client = message_recu_client.lire_status()
         message_client = message_recu_client.lire_message()
 
         if compare_status(status_client, Status_Client.QUITTER):
             # gérer le cas où le joueur veut quitter la partie
-            quitter_la_partie(index_joueur)
+            #passer en parametre le joueur directement
+            quitter_la_partie(joueur)
 
         elif compare_status(status_client, Status_Client.MURER):
-            murer_une_porte(index_joueur, message_client, labyrinthe, clients_connectes)
+            murer_une_porte(joueur, message_client, labyrinthe, clients_connectes.get_liste_connexions())
 
         elif compare_status(status_client, Status_Client.PERCER):
-            percer_un_mur(index_joueur, message_client, labyrinthe, clients_connectes)
+            percer_un_mur(joueur, message_client, labyrinthe, clients_connectes.get_liste_connexions())
 
         elif compare_status(status_client, Status_Client.DEPLACEMENT):
-            deplacer_robot(index_joueur, message_client, labyrinthe, clients_connectes)
+            deplacer_robot(joueur, message_client, labyrinthe, clients_connectes.get_liste_connexions())
 
             # verifier si le joueur a gagné
-            if labyrinthe.partieGagnee(index_joueur):
+            if labyrinthe.partieGagnee(joueur.get_index_joueur()):
                 partie_demarree = False
-                joueur_gagnant = index_joueur
+                joueur_gagnant = joueur.get_index_joueur()
             else:
-                index_joueur = passer_au_joueur_suivant(index_joueur, len(clients_connectes))
+                index_joueur = passer_au_joueur_suivant(index_joueur, clients_connectes.get_nombre_joueurs())
 
     envoyer_message_tous_les_joueurs("Joueur {0} a gagné"
-                                     .format(affichage.affichage_numero_joueur(joueur_gagnant)),
+                                     .format(joueur.get_index_joueur()),
                                      Status.ECOUTE_SERVEUR,
-                                     clients_connectes)
+                                     clients_connectes.get_liste_connexions())
 
 
 def fermeture_connexion(clients_connectes, connexion_principale):
     affichage = AffichageConsole()
 
     affichage.afficheMessage("Fermeture de la connexion")
-    for (index_client, client) in enumerate(clients_connectes):
+    for joueur in clients_connectes:
         affichage.afficheMessage("fermeture connection Joueur {0}"
-                                 .format(affichage.affichage_numero_joueur(index_client)))
+                                 .format(joueur.get_num_joueur()))
 
         envoyer_message_au_client("Merci d'avoir joué. Au revoir.",
                                   Status.DECONNEXION,
-                                  client)
+                                  joueur.get_connexion())
 
-        client.close()
+        joueur.get_connexion().close()
     connexion_principale.close()
 
 
@@ -340,6 +346,7 @@ def serveur_main():
 
     affichage.afficheMessage("attente connexion des clients")
     clients_connectes = attente_connexion_clients_et_demarrage_partie(connexion_principale, labyrinthe)
+
 
     affichage.afficheMessage("la partie commence")
     gestion_partie(labyrinthe, clients_connectes)
