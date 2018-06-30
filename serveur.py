@@ -143,6 +143,9 @@ def traitement_demandes_connexions(connexion_principale, labyrinthe, clients_con
     return clients_connectes
 
 
+def compare_status(nom_status, status_a_comparer):
+    return nom_status == status_a_comparer.name
+
 def traitement_messages_clients(clients_connectes, labyrinthe):
     affichage = AffichageConsole()
     partie_demarree = False
@@ -161,7 +164,7 @@ def traitement_messages_clients(clients_connectes, labyrinthe):
             message_client = MessageClient()
             message_client.importer_json_message(msg_recu)
 
-            if message_client.lire_status() == Status_Client.DEMARRAGE_PARTIE.name:
+            if compare_status(message_client.lire_status(), Status_Client.DEMARRAGE_PARTIE):
                 # demarrage de la partie, on sort de la boucle et on passe à la boucle suivante
                 partie_demarree = True
 
@@ -278,8 +281,7 @@ def deplacer_robot(joueur, direction, labyrinthe, clients_connectes):
                                                   clients_connectes)
 
 
-def compare_status(nom_status, status_a_comparer):
-    return nom_status == status_a_comparer.name
+
 
 def passer_au_joueur_suivant(joueur_courant, nb_joueurs):
     return (joueur_courant + 1) % nb_joueurs
