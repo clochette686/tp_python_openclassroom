@@ -43,3 +43,6 @@ class Joueurs:
 
     def get_nombre_joueurs(self):
         return len(self.liste_joueurs)
+
+    def supprimmer_joueur(self, joueur):
+        self.liste_joueurs.remove(joueur)
